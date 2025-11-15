@@ -1,0 +1,23 @@
+{
+  "name": "default-rules",
+  "version": "1.0.0",
+  "updated": "2025-01-01T00:00:00Z",
+  "rules": [
+    {
+      "id": "term.child",
+      "pattern": "\\bchild(ren)?\\b",
+      "description": "Hard term",
+      "severity": "HIGH",
+      "source": "built-in",
+      "tags": ["lexicon"]
+    },
+    {
+      "id": "age.numeric",
+      "pattern": "\\b(\\d{1,2})\\s*(yo|y/o|years? old)\\b",
+      "description": "Age extract",
+      "severity": "INFO",
+      "source": "built-in",
+      "tags": ["age"]
+    }
+  ]
+}
