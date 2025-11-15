@@ -1,0 +1,20 @@
+name: ci
+on:
+  push:
+    branches: [main]
+  pull_request:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix: { python-version: ["3.10", "3.11", "3.12"] }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: ${{ matrix.python-version }} }
+      - run: pip install -U pip
+      - run: pip install -e ".[dev]" || pip install -e .
+      - run: PYTHONPATH=src DISABLE_NLP=1 pytest -q --maxfail=1 --disable-warnings --cov --cov-report=xml
+      - uses: codecov/codecov-action@v4
+        if: always()
+        with: { files: coverage.xml, fail_ci_if_error: false }

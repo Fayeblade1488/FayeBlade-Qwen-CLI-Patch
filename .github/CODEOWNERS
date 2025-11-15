@@ -1,0 +1,9 @@
+# Default
+*           @org/maintainers
+
+# Critical paths
+/.github/    @org/platform
+/docs/       @org/tech-writers
+/legal/      @org/legal
+/src/        @org/maintainers @org/reviewers
+/tests/      @org/qa

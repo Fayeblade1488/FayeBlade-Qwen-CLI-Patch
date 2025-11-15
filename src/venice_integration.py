@@ -13,21 +13,24 @@ import json
 import os
 import pathlib
 import random
-import signal
 import sys
 import time
+import types
 from typing import Any, Dict, List, Optional, Tuple
-from pathlib import Path
 
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
 # Try to import yaml, with a fallback if not available
+yaml: Optional[types.ModuleType]
 try:
     import yaml
 except ImportError:
-    print("Warning: PyYAML is not installed. Install it with 'pip install PyYAML' to use configuration auto-update functionality.", file=sys.stderr)
+    print(
+        "Warning: PyYAML is not installed. Install it with 'pip install PyYAML' to use configuration auto-update functionality.",
+        file=sys.stderr,
+    )
     yaml = None
 
 
@@ -39,7 +42,9 @@ class VeniceAIVerifier:
     def __init__(self, api_key: Optional[str] = None):
         self.api_key = api_key or os.environ.get("VENICE_API_KEY")
         if not self.api_key:
-            raise ValueError("API key not provided. Use api_key parameter or set VENICE_API_KEY environment variable.")
+            raise ValueError(
+                "API key not provided. Use api_key parameter or set VENICE_API_KEY environment variable."
+            )
 
         self.base_url = "https://api.venice.ai/api/v1"
         self.models_endpoint = f"{self.base_url}/models"
@@ -54,42 +59,45 @@ class VeniceAIVerifier:
             connect=5,
             backoff_factor=0.5,
             status_forcelist=(429, 500, 502, 503, 504),
-            allowed_methods=frozenset(["GET", "POST"])
+            allowed_methods=frozenset(["GET", "POST"]),
         )
         s.mount("https://", HTTPAdapter(max_retries=retry))
         s.mount("http://", HTTPAdapter(max_retries=retry))
-        s.request = self._with_timeouts(s.request, (timeout_connect, timeout_read))
-        s.headers.update({
-            "User-Agent": "qwen-cli-venice-integration/1.0",
-            "Accept": "application/json",
-            "Content-Type": "application/json",
-        })
+        s.headers.update(
+            {
+                "User-Agent": "qwen-cli-venice-integration/1.0",
+                "Accept": "application/json",
+                "Content-Type": "application/json",
+            }
+        )
         return s
 
     def _with_timeouts(self, func, timeouts: Tuple[int, int]):
         """Add timeout wrapper to request function.
-        
+
         Args:
             func: The request function to wrap.
             timeouts: A tuple of (connect_timeout, read_timeout) in seconds.
-            
+
         Returns:
             A wrapper function that adds timeout handling to the request.
         """
+
         def wrapper(method, url, **kwargs):
             """Wrapper function that applies timeouts and rate limiting to requests.
-            
+
             Args:
                 method: HTTP method (GET, POST, etc.).
                 url: The URL to make the request to.
                 **kwargs: Additional keyword arguments for the request.
-                
+
             Returns:
                 The response from the wrapped request function.
             """
             timeout = kwargs.pop("timeout", (timeouts[0], timeouts[1]))
             time.sleep(random.uniform(0, 0.05))
             return func(method, url, timeout=timeout, **kwargs)
+
         return wrapper
 
     def verify_api_key(self) -> Dict[str, Any]:
@@ -109,44 +117,43 @@ class VeniceAIVerifier:
                 "model": "venice-uncensored",  # Use a known model
                 "messages": [{"role": "user", "content": "test"}],
                 "temperature": 0.1,
-                "max_tokens": 5
+                "max_tokens": 5,
             }
 
             resp = s.post(self.chat_endpoint, headers=headers, json=data)
-            req_id = resp.headers.get("x-request-id") or resp.headers.get("X-Request-ID")
+            req_id = resp.headers.get("x-request-id") or resp.headers.get(
+                "X-Request-ID"
+            )
 
-            if resp.status_code in [200, 400]:  # 200 for success, 400 for validation error (but key valid)
+            if resp.status_code in [
+                200,
+                400,
+            ]:  # 200 for success, 400 for validation error (but key valid)
                 # Even if the request fails due to validation, a 400 means the API key was accepted
                 return {
                     "success": True,
                     "status_code": resp.status_code,
                     "request_id": req_id,
-                    "message": "API key is valid"
+                    "message": "API key is valid",
                 }
             elif resp.status_code == 401:
                 return {
                     "success": False,
                     "status_code": resp.status_code,
                     "request_id": req_id,
-                    "message": "Invalid API key"
+                    "message": "Invalid API key",
                 }
             else:
                 return {
                     "success": False,
                     "status_code": resp.status_code,
                     "request_id": req_id,
-                    "message": f"API returned unexpected status: {resp.status_code}"
+                    "message": f"API returned unexpected status: {resp.status_code}",
                 }
         except requests.exceptions.RequestException as e:
-            return {
-                "success": False,
-                "error": f"Request failed: {str(e)}"
-            }
+            return {"success": False, "error": f"Request failed: {str(e)}"}
         except Exception as e:
-            return {
-                "success": False,
-                "error": f"Unexpected error: {str(e)}"
-            }
+            return {"success": False, "error": f"Unexpected error: {str(e)}"}
 
     def fetch_models(self) -> Dict[str, Any]:
         """
@@ -166,37 +173,36 @@ class VeniceAIVerifier:
             return {
                 "success": True,
                 "models": data.get("data", []),
-                "request_id": resp.headers.get("x-request-id") or resp.headers.get("X-Request-ID")
+                "request_id": resp.headers.get("x-request-id")
+                or resp.headers.get("X-Request-ID"),
             }
         except requests.exceptions.HTTPError as e:
             return {
                 "success": False,
                 "error": f"HTTP error: {e}",
                 "status_code": e.response.status_code,
-                "request_id": e.response.headers.get("x-request-id") if e.response else None
+                "request_id": e.response.headers.get("x-request-id")
+                if e.response
+                else None,
             }
         except requests.exceptions.RequestException as e:
-            return {
-                "success": False,
-                "error": f"Request failed: {str(e)}"
-            }
+            return {"success": False, "error": f"Request failed: {str(e)}"}
         except Exception as e:
-            return {
-                "success": False,
-                "error": f"Unexpected error: {str(e)}"
-            }
+            return {"success": False, "error": f"Unexpected error: {str(e)}"}
 
 
 class VeniceAIConfigUpdater:
     """
     A class to generate and update Raycast configuration files with Venice AI models.
     """
-    
+
     def __init__(self, api_key: Optional[str] = None):
         self.verifier = VeniceAIVerifier(api_key)
         self.base_url = "https://api.venice.ai/api/v1"
 
-    def generate_raycast_config(self, output_path: Optional[str] = None) -> Dict[str, Any]:
+    def generate_raycast_config(
+        self, output_path: Optional[str] = None
+    ) -> Dict[str, Any]:
         """
         Generate a Raycast configuration file with updated model information.
 
@@ -209,7 +215,7 @@ class VeniceAIConfigUpdater:
         if yaml is None:
             return {
                 "success": False,
-                "error": "PyYAML is not installed. Install it with 'pip install PyYAML'"
+                "error": "PyYAML is not installed. Install it with 'pip install PyYAML'",
             }
 
         # Fetch models from API
@@ -220,7 +226,7 @@ class VeniceAIConfigUpdater:
         models_data = models_result["models"]
 
         # Construct the configuration - DO NOT include the actual API key in the config
-        config = {
+        config: Dict[str, List[Dict[str, Any]]] = {
             "providers": [
                 {
                     "id": "venice",
@@ -232,7 +238,7 @@ class VeniceAIConfigUpdater:
                         # environment variables or prompt the user for it separately.
                         "openai": "${VENICE_API_KEY}"  # Placeholder that references environment variable
                     },
-                    "models": []
+                    "models": [],
                 }
             ]
         }
@@ -262,12 +268,15 @@ class VeniceAIConfigUpdater:
                 "context": context,
                 "provider": "venice",
                 "abilities": {
-                    "temperature": {"supported": temperature_supported, "default": temperature_default},
+                    "temperature": {
+                        "supported": temperature_supported,
+                        "default": temperature_default,
+                    },
                     "vision": {"supported": vision_supported},
                     "tools": {"supported": tools_supported},
                     "web_search": {"supported": web_search_supported},
-                    "reasoning": {"supported": reasoning_supported}
-                }
+                    "reasoning": {"supported": reasoning_supported},
+                },
             }
 
             config["providers"][0]["models"].append(model_entry)
@@ -282,19 +291,18 @@ class VeniceAIConfigUpdater:
 
         try:
             # Write the config to file
-            with open(output_path, 'w') as file:
-                yaml.dump(config, file, default_flow_style=False, indent=2, sort_keys=False)
+            with open(output_path, "w") as file:
+                yaml.dump(
+                    config, file, default_flow_style=False, indent=2, sort_keys=False
+                )
 
             return {
                 "success": True,
                 "config_path": output_path,
-                "model_count": len(config["providers"][0]["models"])
+                "model_count": len(config["providers"][0]["models"]),
             }
         except Exception as e:
-            return {
-                "success": False,
-                "error": f"Failed to write config file: {str(e)}"
-            }
+            return {"success": False, "error": f"Failed to write config file: {str(e)}"}
 
     def update_raycast_config(self) -> Dict[str, Any]:
         """Updates the Raycast configuration with the latest Venice AI models.
@@ -309,7 +317,7 @@ class VeniceAIConfigUpdater:
         if not self.verifier.api_key:
             return {
                 "success": False,
-                "error": "No API key provided or available in environment"
+                "error": "No API key provided or available in environment",
             }
 
         # First verify the API key
@@ -355,26 +363,28 @@ class VeniceAIImageGenerator:
         """
         self.api_key = api_key or os.environ.get("VENICE_API_KEY")
         if not self.api_key:
-            raise ValueError("API key not provided. Use api_key parameter or set VENICE_API_KEY environment variable.")
-        
+            raise ValueError(
+                "API key not provided. Use api_key parameter or set VENICE_API_KEY environment variable."
+            )
+
         self.base_url = "https://api.venice.ai/api/v1"
         self.gen_endpoint = f"{self.base_url}/image/generate"
         self.upscale_endpoint = f"{self.base_url}/image/upscale"
-        
+
         # Default settings for uncensored generation
         self.default_model = "lustify-sdxl"  # Uncensored model
         self.default_steps = 50  # Appropriate for lustify-sdxl model
         self.default_cfg = 5.0
         self.default_negative = ""  # Empty negative prompt for uncensored results
         self.default_safe_mode = False  # Disable safe mode for uncensored generation
-        
+
         # Aspect ratio to dimensions mapping
         self.aspect_to_size = {
             "square": (1024, 1024),
             "tall": (768, 1024),
             "wide": (1024, 768),
         }
-    
+
     def _session(self, timeout_connect=10, timeout_read=120) -> requests.Session:
         """Creates a requests session with retry logic and timeout handling.
 
@@ -388,44 +398,47 @@ class VeniceAIImageGenerator:
             connect=5,
             backoff_factor=0.5,
             status_forcelist=(429, 500, 502, 503, 504),
-            allowed_methods=frozenset(["GET", "POST"])
+            allowed_methods=frozenset(["GET", "POST"]),
         )
         s.mount("https://", HTTPAdapter(max_retries=retry))
         s.mount("http://", HTTPAdapter(max_retries=retry))
-        s.request = self._with_timeouts(s.request, (timeout_connect, timeout_read))
-        s.headers.update({
-            "User-Agent": "qwen-cli-venice-integration/1.0",
-            "Accept": "application/json",
-            "Content-Type": "application/json",
-        })
+        s.headers.update(
+            {
+                "User-Agent": "qwen-cli-venice-integration/1.0",
+                "Accept": "application/json",
+                "Content-Type": "application/json",
+            }
+        )
         return s
-    
+
     def _with_timeouts(self, func, timeouts: Tuple[int, int]):
         """Adds a timeout wrapper to a request function.
-        
+
         Args:
             func: The request function to wrap.
             timeouts: A tuple of (connect_timeout, read_timeout) in seconds.
-            
+
         Returns:
             A wrapper function that adds timeout handling to the request.
         """
+
         def wrapper(method, url, **kwargs):
             """Wrapper function that applies timeouts and rate limiting to requests.
-            
+
             Args:
                 method: HTTP method (GET, POST, etc.).
                 url: The URL to make the request to.
                 **kwargs: Additional keyword arguments for the request.
-                
+
             Returns:
                 The response from the wrapped request function.
             """
             timeout = kwargs.pop("timeout", (timeouts[0], timeouts[1]))
             time.sleep(random.uniform(0, 0.05))
             return func(method, url, timeout=timeout, **kwargs)
+
         return wrapper
-    
+
     def _size_from_aspect(self, aspect: str) -> Tuple[int, int]:
         """Gets pixel dimensions from a named aspect ratio.
 
@@ -439,9 +452,11 @@ class VeniceAIImageGenerator:
             ValueError: If the aspect ratio name is invalid.
         """
         if aspect not in self.aspect_to_size:
-            raise ValueError(f"Invalid aspect ratio: {aspect}. Choose from {list(self.aspect_to_size)}")
+            raise ValueError(
+                f"Invalid aspect ratio: {aspect}. Choose from {list(self.aspect_to_size)}"
+            )
         return self.aspect_to_size[aspect]
-    
+
     def _ensure_dir(self, p: pathlib.Path) -> None:
         """Ensures that a directory exists, creating it if necessary.
 
@@ -449,7 +464,7 @@ class VeniceAIImageGenerator:
             p: A `pathlib.Path` object representing the directory.
         """
         p.mkdir(parents=True, exist_ok=True)
-    
+
     def _now_iso(self) -> str:
         """Gets the current time in UTC ISO 8601 format.
 
@@ -457,7 +472,7 @@ class VeniceAIImageGenerator:
             A string representing the current time (e.g., "2023-10-27T10:00:00Z").
         """
         return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
-    
+
     def _save_bytes(self, path: pathlib.Path, data: bytes) -> None:
         """Saves a byte string to a file atomically.
 
@@ -473,7 +488,7 @@ class VeniceAIImageGenerator:
         with open(tmp, "wb") as f:
             f.write(data)
         tmp.replace(path)
-    
+
     def _decode_image_from_json(self, payload: Dict[str, Any]) -> bytes:
         """Decodes a base64-encoded image from a JSON response payload.
 
@@ -488,10 +503,14 @@ class VeniceAIImageGenerator:
         """
         if "image" in payload and isinstance(payload["image"], str):
             return base64.b64decode(payload["image"])
-        if "images" in payload and isinstance(payload["images"], list) and payload["images"]:
+        if (
+            "images" in payload
+            and isinstance(payload["images"], list)
+            and payload["images"]
+        ):
             return base64.b64decode(payload["images"][0])
         raise KeyError("No image data found in response JSON.")
-    
+
     def _is_binary_image_response(self, resp: requests.Response) -> bool:
         """Checks if a response object contains a binary image.
 
@@ -504,7 +523,7 @@ class VeniceAIImageGenerator:
         """
         ctype = resp.headers.get("Content-Type", "")
         return ctype.startswith("image/")
-    
+
     def _sha256(self, data: bytes) -> str:
         """Calculates the SHA256 hash of a byte string.
 
@@ -515,8 +534,10 @@ class VeniceAIImageGenerator:
             The hexadecimal SHA256 hash string.
         """
         return hashlib.sha256(data).hexdigest()
-    
-    def _effective_dims(self, aspect: str, width: Optional[int], height: Optional[int]) -> Tuple[int, int]:
+
+    def _effective_dims(
+        self, aspect: str, width: Optional[int], height: Optional[int]
+    ) -> Tuple[int, int]:
         """Determines the effective dimensions for image generation.
 
         If width and height are provided, they are used directly. Otherwise,
@@ -533,7 +554,7 @@ class VeniceAIImageGenerator:
         if width and height:
             return int(width), int(height)
         return self._size_from_aspect(aspect)
-    
+
     def generate_image(
         self,
         prompt: str,
@@ -604,13 +625,13 @@ class VeniceAIImageGenerator:
         cfg_scale = cfg_scale or self.default_cfg
         negative_prompt = negative_prompt or self.default_negative
         safe_mode = safe_mode if safe_mode is not None else self.default_safe_mode
-        
+
         if verbose:
             print(f"Generating image with prompt: '{prompt}' using model: {model}")
-        
+
         # Get dimensions
         w, h = self._effective_dims(aspect_ratio, width, height)
-        
+
         # Create the session and request
         s = self._session()
         data: Dict[str, Any] = {
@@ -626,16 +647,16 @@ class VeniceAIImageGenerator:
             "embed_exif_metadata": embed_exif,
             "safe_mode": safe_mode,  # Explicitly disable for uncensored generation
         }
-        
+
         if seed is not None:
             data["seed"] = seed
         if image_style and image_style.lower() != "none":
             data["style_preset"] = image_style
-        
+
         headers = {"Authorization": f"Bearer {self.api_key}"}
         resp = s.post(self.gen_endpoint, headers=headers, json=data)
         req_id = resp.headers.get("x-request-id") or resp.headers.get("X-Request-ID")
-        
+
         try:
             resp.raise_for_status()
         except requests.HTTPError:
@@ -645,7 +666,7 @@ class VeniceAIImageGenerator:
             except Exception:
                 pass
             raise requests.HTTPError(json.dumps(err)) from None
-        
+
         # Handle the response
         if self._is_binary_image_response(resp):
             b = resp.content
@@ -660,17 +681,20 @@ class VeniceAIImageGenerator:
                 images_b64 = [result["image"]]
             else:
                 raise KeyError("No images found in generation response.")
-            
+
             if not images_b64:
                 raise ValueError("No image generated.")
-            
+
             # Decode the first image
             b = base64.b64decode(images_b64[0])
         output = {"bytes": b, "meta": {"response": result, "request_id": req_id}}
-        
+
         if verbose:
-            print(f"[gen] got {len(b)} bytes (sha256={self._sha256(b)[:12]})", file=sys.stderr)
-        
+            print(
+                f"[gen] got {len(b)} bytes (sha256={self._sha256(b)[:12]})",
+                file=sys.stderr,
+            )
+
         # Save the generated image
         out_dir = pathlib.Path(output_dir).resolve()
         upscaled_dir = out_dir / "upscaled"
@@ -678,17 +702,17 @@ class VeniceAIImageGenerator:
         self._ensure_dir(out_dir)
         self._ensure_dir(upscaled_dir)
         self._ensure_dir(meta_dir)
-        
+
         # Create filename
         ts_short = time.strftime("%Y%m%d_%H%M%S", time.gmtime())
         seed_tag = f"s{seed}" if seed is not None else "rnd"
         stem = f"{output_name or 'venice_image'}_{seed_tag}_{ts_short}_1"
         img_path = out_dir / f"{stem}.{output_format}"
-        
+
         # Save image
         self._save_bytes(img_path, b)
         sha = self._sha256(b)
-        
+
         # Create metadata
         meta_payload = {
             "timestamp": self._now_iso(),
@@ -713,34 +737,38 @@ class VeniceAIImageGenerator:
             "output_sha256": sha,
             "output_path": str(img_path),
         }
-        
+
         # Save metadata
         meta_path = meta_dir / f"{stem}.json"
         with open(meta_path, "w", encoding="utf-8") as f:
             json.dump(meta_payload, f, ensure_ascii=False, indent=2)
-        
+
         result_dict = {
             "success": True,
             "generated_image_path": str(img_path),
             "metadata_path": str(meta_path),
             "image_sha256": sha,
             "request_id": req_id,
-            "response_data": result
+            "response_data": result,
         }
-        
+
         # Upscale if requested
         if auto_upscale:
             try:
                 up_bytes, up_meta = self.upscale_image_bytes(
-                    b, scale=upscale_scale, enhance=upscale_enhance,
-                    enhance_creativity=upscale_creativity, enhance_prompt=upscale_prompt,
-                    replication=upscale_replication, verbose=verbose
+                    b,
+                    scale=upscale_scale,
+                    enhance=upscale_enhance,
+                    enhance_creativity=upscale_creativity,
+                    enhance_prompt=upscale_prompt,
+                    replication=upscale_replication,
+                    verbose=verbose,
                 )
-                
+
                 up_path = upscaled_dir / f"{stem}_upscaled.{output_format}"
                 self._save_bytes(up_path, up_bytes)
                 up_sha = self._sha256(up_bytes)
-                
+
                 up_meta_payload = {
                     "timestamp": self._now_iso(),
                     "mode": "upscale_post_gen",
@@ -756,28 +784,28 @@ class VeniceAIImageGenerator:
                     "output_sha256": up_sha,
                     "output_path": str(up_path),
                 }
-                
+
                 up_meta_path = meta_dir / f"{stem}_upscaled.json"
                 with open(up_meta_path, "w", encoding="utf-8") as f:
                     json.dump(up_meta_payload, f, ensure_ascii=False, indent=2)
-                
+
                 result_dict["upscaled_image_path"] = str(up_path)
                 result_dict["upscaled_metadata_path"] = str(up_meta_path)
                 result_dict["upscaled_image_sha256"] = up_sha
-                
+
                 if verbose:
                     print(f"Upscaled → {up_path}")
-                
+
             except Exception as e:
                 if verbose:
                     print(f"Warning: Upscaling failed: {e}", file=sys.stderr)
                 result_dict["upscale_error"] = str(e)
-        
+
         if verbose:
             print(f"Generated → {img_path}")
-        
+
         return result_dict
-    
+
     def upscale_image_bytes(
         self,
         image_bytes: bytes,
@@ -814,11 +842,11 @@ class VeniceAIImageGenerator:
         }
         if enhance_prompt:
             data["enhancePrompt"] = enhance_prompt
-        
+
         headers = {"Authorization": f"Bearer {self.api_key}"}
         resp = s.post(self.upscale_endpoint, headers=headers, json=data)
         req_id = resp.headers.get("x-request-id") or resp.headers.get("X-Request-ID")
-        
+
         try:
             resp.raise_for_status()
         except requests.HTTPError:
@@ -828,23 +856,29 @@ class VeniceAIImageGenerator:
             except Exception:
                 pass
             raise requests.HTTPError(json.dumps(err)) from None
-        
+
         if self._is_binary_image_response(resp):
-            up_bytes, payload = resp.content, {"binary": True, "status_code": resp.status_code, "request_id": req_id}
+            up_bytes, payload = (
+                resp.content,
+                {"binary": True, "status_code": resp.status_code, "request_id": req_id},
+            )
         else:
             payload = resp.json()
             up_bytes = self._decode_image_from_json(payload)
             payload["request_id"] = req_id
-        
+
         if verbose:
-            print(f"[upscale] got {len(up_bytes)} bytes (sha256={self._sha256(up_bytes)[:12]})", file=sys.stderr)
-        
+            print(
+                f"[upscale] got {len(up_bytes)} bytes (sha256={self._sha256(up_bytes)[:12]})",
+                file=sys.stderr,
+            )
+
         return up_bytes, payload
-    
+
     def upscale_image_file(
         self,
         image_path: str,
-        output_path: Optional[str] = None,
+        output_path: Optional[pathlib.Path] = None,
         scale: int = 4,
         enhance: bool = True,
         enhance_creativity: float = 0.15,
@@ -875,21 +909,29 @@ class VeniceAIImageGenerator:
         # Read the input image
         with open(image_path, "rb") as f:
             raw = f.read()
-        
+
         # Upscale
         up_bytes, up_meta = self.upscale_image_bytes(
-            raw, scale, enhance, enhance_creativity, enhance_prompt, replication, verbose
+            raw,
+            scale,
+            enhance,
+            enhance_creativity,
+            enhance_prompt,
+            replication,
+            verbose,
         )
-        
+
         # Determine output path
         if output_path is None:
             path_obj = pathlib.Path(image_path)
-            output_path = path_obj.with_name(f"{path_obj.stem}_upscaled{path_obj.suffix}")
-        
+            output_path = path_obj.with_name(
+                f"{path_obj.stem}_upscaled{path_obj.suffix}"
+            )
+
         # Save upscaled image
         with open(output_path, "wb") as f:
             f.write(up_bytes)
-        
+
         result = {
             "success": True,
             "input_path": image_path,
@@ -897,14 +939,14 @@ class VeniceAIImageGenerator:
             "input_sha256": self._sha256(raw),
             "output_sha256": self._sha256(up_bytes),
             "request_id": up_meta.get("request_id"),
-            "response_meta": up_meta
+            "response_meta": up_meta,
         }
-        
+
         if verbose:
             print(f"Upscaled image → {output_path}")
-        
+
         return result
-    
+
     def list_models(self) -> Dict[str, List[Dict[str, Any]]]:
         """Lists all available models and a filtered list of uncensored models.
 
@@ -919,7 +961,7 @@ class VeniceAIImageGenerator:
         """
         temp_verifier = VeniceAIVerifier(self.api_key)
         result = temp_verifier.fetch_models()
-        
+
         if not result["success"]:
             print(f"Error listing models: {result.get('error', 'Unknown error')}")
             return {"all_models": [], "uncensored_models": []}
@@ -931,7 +973,10 @@ class VeniceAIImageGenerator:
         for model in all_models:
             model_id = model.get("id", "").lower()
             model_name = model.get("model_spec", {}).get("name", "").lower()
-            if any(keyword in model_id or keyword in model_name for keyword in uncensored_keywords):
+            if any(
+                keyword in model_id or keyword in model_name
+                for keyword in uncensored_keywords
+            ):
                 uncensored_models.append(model)
 
         return {"all_models": all_models, "uncensored_models": uncensored_models}
@@ -939,37 +984,56 @@ class VeniceAIImageGenerator:
 
 def main():
     """Main function to test the enhanced Venice AI integration."""
-    parser = argparse.ArgumentParser(description="Enhanced Venice AI Integration with Verification and Auto-Update")
-    parser.add_argument("--verify", action="store_true", help="Verify the Venice AI API key")
-    parser.add_argument("--update-config", action="store_true", help="Update Raycast configuration with latest models")
-    parser.add_argument("--list-models", action="store_true", help="List available Venice AI models")
-    parser.add_argument("--api-key", type=str, help="Venice API key (or set VENICE_API_KEY env var)")
-    parser.add_argument("--config-path", type=str, help="Path to save the config file (default: Raycast location)")
-    
+    parser = argparse.ArgumentParser(
+        description="Enhanced Venice AI Integration with Verification and Auto-Update"
+    )
+    parser.add_argument(
+        "--verify", action="store_true", help="Verify the Venice AI API key"
+    )
+    parser.add_argument(
+        "--update-config",
+        action="store_true",
+        help="Update Raycast configuration with latest models",
+    )
+    parser.add_argument(
+        "--list-models", action="store_true", help="List available Venice AI models"
+    )
+    parser.add_argument(
+        "--api-key", type=str, help="Venice API key (or set VENICE_API_KEY env var)"
+    )
+    parser.add_argument(
+        "--config-path",
+        type=str,
+        help="Path to save the config file (default: Raycast location)",
+    )
+
     args = parser.parse_args()
-    
+
     # Initialize the verifier
     try:
         api_key = args.api_key or os.environ.get("VENICE_API_KEY")
         if not api_key:
-            print("Error: No API key provided. Use --api-key or set VENICE_API_KEY environment variable.", file=sys.stderr)
+            print(
+                "Error: No API key provided. Use --api-key or set VENICE_API_KEY environment variable.",
+                file=sys.stderr,
+            )
             return 1
-        
+
         if args.verify:
             verifier = VeniceAIVerifier(api_key)
             result = verifier.verify_api_key()
             print(json.dumps(result, indent=2))
-        
+
         elif args.update_config:
             updater = VeniceAIConfigUpdater(api_key)
             result = updater.update_raycast_config()
             print(json.dumps(result, indent=2))
-        
+
         elif args.list_models:
             verifier = VeniceAIVerifier(api_key)
             result = verifier.fetch_models()
             print(json.dumps(result, indent=2))
-        
+
         else:
             parser.print_help()
             return 1
@@ -983,4 +1047,5 @@ def main():
 
 if __name__ == "__main__":
     import sys
+
     sys.exit(main())

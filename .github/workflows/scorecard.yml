@@ -1,0 +1,12 @@
+name: scorecard
+on:
+  branch_protection_rule:
+  schedule: [{ cron: "0 4 * * 1" }]
+  push: { branches: [main] }
+jobs:
+  analysis:
+    uses: ossf/scorecard/.github/workflows/analysis.yml@main
+    permissions:
+      security-events: write
+      id-token: write
+      contents: read
