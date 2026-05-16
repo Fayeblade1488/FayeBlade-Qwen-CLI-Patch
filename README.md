@@ -4,8 +4,8 @@
 
 [![Python Version](https://img.shields.io/badge/python-3.7%2B-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![GitHub Stars](https://img.shields.io/github/stars/Fayeblade1488/Faye-Blade_Qwencode_venice_gitkraken?style=social)](https://github.com/Fayeblade1488/Faye-Blade_Qwencode_venice_gitkraken/stargazers)
-[![GitHub Issues](https://img.shields.io/github/issues/Fayeblade1488/Faye-Blade_Qwencode_venice_gitkraken)](https://github.com/Fayeblade1488/Faye-Blade_Qwencode_venice_gitkraken/issues)
+[![GitHub Stars](https://img.shields.io/github/stars/Fayeblade1488/FayeBlade-Qwen-CLI-Patch?style=social)](https://github.com/Fayeblade1488/FayeBlade-Qwen-CLI-Patch/stargazers)
+[![GitHub Issues](https://img.shields.io/github/issues/Fayeblade1488/FayeBlade-Qwen-CLI-Patch)](https://github.com/Fayeblade1488/FayeBlade-Qwen-CLI-Patch/issues)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 <img width="1536" height="1024" alt="Qwen CLI Integration Banner" src="https://github.com/user-attachments/assets/a23c49db-d0b8-4468-aa5a-a85e1b3ab0f3" />
@@ -90,8 +90,8 @@ The integration is designed to work within the Qwen CLI ecosystem, allowing user
 
 ```bash
 # Clone the repository
-git clone https://github.com/Fayeblade1488/Faye-Blade_Qwencode_venice_gitkraken.git
-cd Faye-Blade_Qwencode_venice_gitkraken
+git clone https://github.com/Fayeblade1488/FayeBlade-Qwen-CLI-Patch.git
+cd FayeBlade-Qwen-CLI-Patch
 
 # Install dependencies
 pip install -r requirements.txt
@@ -237,8 +237,8 @@ When using the uncensored image generation capabilities, please be aware that th
 
 1. **Clone the Repository**:
    ```bash
-   git clone https://github.com/Fayeblade1488/Faye-Blade_Qwencode_venice_gitkraken.git
-   cd Faye-Blade_Qwencode_venice_gitkraken
+   git clone https://github.com/Fayeblade1488/FayeBlade-Qwen-CLI-Patch.git
+   cd FayeBlade-Qwen-CLI-Patch
    ```
 
 2. **Create a Virtual Environment** (recommended):
@@ -266,8 +266,8 @@ When using the uncensored image generation capabilities, please be aware that th
 ├── external_api_integrator.py    # External AI provider integration
 ├── qwen_cli_integrator.py        # Main CLI orchestrator
 ├── auto_config.py                # Auto-configuration script
-├── test_integration.py           # Integration tests
-├── AGENT.md                      # Documentation for AI agents
+├── tests/                        # Pytest suite (e.g. tests/test_integration.py)
+├── AGENT_GUIDE.md                # Documentation for AI agents
 ├── QUICKSTART_GUIDE.md           # Beginner-friendly guide
 └── README.md                     # This file
 ```
@@ -282,7 +282,7 @@ python -m pytest
 python -m pytest --cov=. --cov-report=html
 
 # Run specific test file
-python -m pytest test_integration.py
+python -m pytest tests/test_integration.py
 ```
 
 ### Code Quality
@@ -406,8 +406,8 @@ We welcome contributions from the community! 🎉
 
 ```bash
 # Fork and clone
-git clone https://github.com/YOUR_USERNAME/Faye-Blade_Qwencode_venice_gitkraken.git
-cd Faye-Blade_Qwencode_venice_gitkraken
+git clone https://github.com/YOUR_USERNAME/FayeBlade-Qwen-CLI-Patch.git
+cd FayeBlade-Qwen-CLI-Patch
 
 # Install dev dependencies
 pip install -r requirements.txt
@@ -424,7 +424,7 @@ isort --profile black .
 ### Reporting Issues
 
 Found a bug? 🐞
-- Use [GitHub Issues](https://github.com/Fayeblade1488/Faye-Blade_Qwencode_venice_gitkraken/issues)
+- Use [GitHub Issues](https://github.com/Fayeblade1488/FayeBlade-Qwen-CLI-Patch/issues)
 - Use issue templates provided
 - Include: OS, Python version, steps to reproduce, error messages
 - Redact any sensitive information (API keys, personal data)
@@ -493,12 +493,12 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 - [GitKraken](https://www.gitkraken.com/) for their excellent CLI tool
 - [Venice AI](https://venice.ai/) for uncensored AI capabilities
-- All [contributors](https://github.com/Fayeblade1488/Faye-Blade_Qwencode_venice_gitkraken/graphs/contributors)
+- All [contributors](https://github.com/Fayeblade1488/FayeBlade-Qwen-CLI-Patch/graphs/contributors)
 
 ## 📞 Support
 
-- 🐞 **Bug Reports**: [GitHub Issues](https://github.com/Fayeblade1488/Faye-Blade_Qwencode_venice_gitkraken/issues)
-- 💬 **Discussions**: [GitHub Discussions](https://github.com/Fayeblade1488/Faye-Blade_Qwencode_venice_gitkraken/discussions)
+- 🐞 **Bug Reports**: [GitHub Issues](https://github.com/Fayeblade1488/FayeBlade-Qwen-CLI-Patch/issues)
+- 💬 **Discussions**: [GitHub Discussions](https://github.com/Fayeblade1488/FayeBlade-Qwen-CLI-Patch/discussions)
 - 📧 **Security**: See [SECURITY.md](SECURITY.md)
 
 ---

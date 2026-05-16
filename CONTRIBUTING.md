@@ -49,8 +49,8 @@ This project adheres to a Code of Conduct that all contributors are expected to 
 
 1. **Fork and Clone**
    ```bash
-   git clone https://github.com/YOUR_USERNAME/Faye-Blade_Qwencode_venice_gitkraken.git
-   cd Faye-Blade_Qwencode_venice_gitkraken
+   git clone https://github.com/YOUR_USERNAME/FayeBlade-Qwen-CLI-Patch.git
+   cd FayeBlade-Qwen-CLI-Patch
    ```
 
 2. **Create Virtual Environment**
@@ -82,7 +82,7 @@ This project adheres to a Code of Conduct that all contributors are expected to 
 
 ### Project Structure
 ```
-Faye-Blade_Qwencode_venice_gitkraken/
+FayeBlade-Qwen-CLI-Patch/
 ├── qwen_cli_integrator.py       # Main CLI entry point
 ├── venice_integration.py        # Venice AI module
 ├── gitkraken_integration.py     # GitKraken CLI wrapper

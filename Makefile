@@ -50,7 +50,7 @@ install:
 # Run tests
 .PHONY: test
 test: $(VENV)/bin/activate
-	$(VENV_PYTHON) test_integration.py
+	$(VENV_PYTHON) -m pytest tests/ -q
 
 # Run the main integrator
 .PHONY: run
@@ -136,7 +136,7 @@ install-system: setup
 validate-security:
 	@echo "Checking for potential security issues..."
 	@FOUND=$$(grep -r "API_KEY\|SECRET\|PASSWORD\|TOKEN" --include="*.py" --include="*.md" --include="*.txt" . 2>/dev/null || true); \
-	if [ -n "$$FOUND" ] && [ "$$(echo "$$FOUND" | grep -v ".gitignore\|README.md\|Makefile\|package.json\|venice_integration.py\|gitkraken_integration.py\|qwen_cli_integrator.py\|test_integration.py" | grep -v "VENICE_API_KEY" | grep -v "api_key" | wc -l)" -ne 0 ]; then \
+	if [ -n "$$FOUND" ] && [ "$$(echo "$$FOUND" | grep -v ".gitignore\|README.md\|Makefile\|package.json\|venice_integration.py\|gitkraken_integration.py\|qwen_cli_integrator.py\|tests/" | grep -v "VENICE_API_KEY" | grep -v "api_key" | wc -l)" -ne 0 ]; then \
 		echo "⚠ Potential security issue found:"; \
 		echo "$$FOUND"; \
 		exit 1; \

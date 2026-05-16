@@ -252,9 +252,10 @@ class TestVeniceIntegration(unittest.TestCase):
 class TestExternalAPIIntegrator(unittest.TestCase):
     """Test suite for External API Integrator."""
     
+    @patch('external_api_integrator.os.path.exists', return_value=True)
     @patch('external_api_integrator.yaml')
-    @patch('builtins.open', new_callable=mock_open, read_data='providers:\n  - id: test\n    name: Test')
-    def test_load_providers_success(self, mock_file, mock_yaml):
+    @patch('builtins.open', new_callable=mock_open, read_data='providers:\n  - id: test_provider\n    name: Test')
+    def test_load_providers_success(self, mock_file, mock_yaml, mock_exists):
         """Test successful provider loading."""
         from external_api_integrator import ExternalAPIIntegrator
         
@@ -264,8 +265,7 @@ class TestExternalAPIIntegrator(unittest.TestCase):
             ]
         }
         
-        integrator = ExternalAPIIntegrator()
-        integrator.providers_config_path = 'test.yaml'
+        integrator = ExternalAPIIntegrator(providers_config_path='test.yaml')
         result = integrator.load_providers_from_config()
         
         self.assertTrue(result)
@@ -332,13 +332,14 @@ class TestExternalAPIIntegrator(unittest.TestCase):
         mock_response.json.return_value = {
             'choices': [{'message': {'content': 'Response'}}]
         }
+        mock_response.raise_for_status = Mock()
         mock_post.return_value = mock_response
         
         integrator = ExternalAPIIntegrator()
         integrator.providers = {
             'test': {
-                'base_url': 'https://api.test.com',
-                'api_keys': {'openai': 'test_key'},
+                'endpoint': 'https://api.test.com/v1/chat/completions',
+                'api_key': 'test_key',
                 'models': [{'id': 'test-model'}]
             }
         }
@@ -348,7 +349,7 @@ class TestExternalAPIIntegrator(unittest.TestCase):
             [{'role': 'user', 'content': 'Hello'}]
         )
         
-        self.assertTrue(result['success'])
+        self.assertIn('choices', result)
         mock_post.assert_called_once()
     
     def test_chat_completion_no_provider(self):
@@ -356,13 +357,12 @@ class TestExternalAPIIntegrator(unittest.TestCase):
         from external_api_integrator import ExternalAPIIntegrator
         
         integrator = ExternalAPIIntegrator()
-        result = integrator.chat_completion(
-            'nonexistent', 'model',
-            [{'role': 'user', 'content': 'Hello'}]
-        )
-        
-        self.assertFalse(result['success'])
-        self.assertIn('not found', result['error'])
+        with self.assertRaises(ValueError) as ctx:
+            integrator.chat_completion(
+                'nonexistent', 'model',
+                [{'role': 'user', 'content': 'Hello'}]
+            )
+        self.assertIn('not found', str(ctx.exception).lower())
 
 
 class TestAutoConfig(unittest.TestCase):

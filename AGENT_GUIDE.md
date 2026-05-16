@@ -16,7 +16,7 @@ This is a **unified CLI tool** that integrates:
 ## 📁 File Structure (Essential Files Only)
 
 ```
-/Faye-Blade_Qwencode_venice_gitkraken/
+/FayeBlade-Qwen-CLI-Patch/
 ├── qwen_cli_integrator.py        # MAIN ENTRY POINT - Start here
 ├── venice_integration.py         # Venice AI module (image generation)
 ├── gitkraken_integration.py      # GitKraken CLI wrapper  
@@ -25,7 +25,7 @@ This is a **unified CLI tool** that integrates:
 ├── requirements.txt              # Python dependencies
 ├── Makefile                      # Build/test automation
 ├── install.sh                    # Installation script
-├── test_integration.py           # Integration tests
+├── tests/                        # Pytest suite (e.g. test_integration.py)
 ├── README.md                     # Human-readable documentation
 ├── QUICKSTART_GUIDE.md           # Getting started guide
 └── AGENT_GUIDE.md                # This file (for AI agents)
@@ -226,7 +226,7 @@ START
 1. **Start with**: `qwen_cli_integrator.py` - Contains main() and all CLI routing
 2. **For Venice AI**: Look at `VeniceAIImageGenerator` class in `venice_integration.py`
 3. **For Git ops**: Look at `GitKrakenCLI` class in `gitkraken_integration.py`
-4. **For examples**: Check `test_integration.py` for usage patterns
+4. **For examples**: Check `tests/test_integration.py` for usage patterns
 5. **For setup**: Review `Makefile` targets (`make check`, `make test`, `make install`)
 
 ---
