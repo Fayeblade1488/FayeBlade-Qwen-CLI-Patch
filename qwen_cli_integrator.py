@@ -473,7 +473,21 @@ def main():
     
     # List models command
     venice_subparsers.add_parser("list-models", help="List available Venice AI models")
-    
+    venice_subparsers.add_parser("verify", help="Verify Venice API key (uses VENICE_API_KEY)")
+
+    # External providers (Raycast-style providers.yaml)
+    external_parser = subparsers.add_parser(
+        "external", help="External API providers (reads ~/.config/raycast/ai/providers.yaml)"
+    )
+    external_subparsers = external_parser.add_subparsers(dest="external_command", help="External commands")
+    external_subparsers.add_parser("list-providers", help="List configured providers and models")
+    ext_chat = external_subparsers.add_parser("chat", help="Chat completion via a configured provider")
+    ext_chat.add_argument("--provider", type=str, required=True, help="Provider ID from providers config")
+    ext_chat.add_argument("--model", type=str, required=True, help="Model ID")
+    ext_chat.add_argument("--message", type=str, required=True, help="User message")
+    ext_chat.add_argument("--temperature", type=float, default=0.7, help="Sampling temperature")
+    ext_chat.add_argument("--max-tokens", type=int, default=None, help="Max tokens to generate")
+
     args = parser.parse_args()
     
     # Initialize the integrator
@@ -541,7 +555,33 @@ def main():
         elif args.venice_command == "list-models":
             result = integrator.list_available_models()
             print(json.dumps(result, indent=2))
-    
+
+        elif args.venice_command == "verify":
+            result = integrator.verify_venice_api()
+            print(json.dumps(result, indent=2))
+
+    elif args.tool == "external":
+        if args.external_command is None:
+            parser.print_help()
+            return 1
+
+        if args.external_command == "list-providers":
+            result = integrator.list_external_providers()
+            print(json.dumps(result, indent=2))
+
+        elif args.external_command == "chat":
+            messages = [{"role": "user", "content": args.message}]
+            kwargs = {"temperature": args.temperature}
+            if args.max_tokens is not None:
+                kwargs["max_tokens"] = args.max_tokens
+            result = integrator.external_chat_completion(
+                provider_id=args.provider,
+                model_id=args.model,
+                messages=messages,
+                **kwargs,
+            )
+            print(json.dumps(result, indent=2))
+
     else:
         parser.print_help()
         return 1

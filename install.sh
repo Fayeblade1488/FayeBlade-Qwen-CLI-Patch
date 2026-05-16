@@ -72,7 +72,7 @@ fi
 
 # Run the test suite
 echo -e "${BLUE}Running test suite...${NC}"
-python3 test_integration.py
+python3 -m pytest tests/ -q
 
 echo
 echo -e "${GREEN}Setup completed successfully!${NC}"

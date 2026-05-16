@@ -36,8 +36,8 @@ Before starting, ensure you have:
 
 1. **Clone the repository:**
 ```bash
-git clone https://github.com/your-repo/qwen-integration-public-repo.git
-cd qwen-integration-public-repo
+git clone https://github.com/Fayeblade1488/FayeBlade-Qwen-CLI-Patch.git
+cd FayeBlade-Qwen-CLI-Patch
 ```
 
 2. **Install dependencies:**
@@ -64,7 +64,7 @@ export VENICE_API_KEY="your_venice_api_key_here"
 
 ### Step 2: Verify your API key works
 ```bash
-python qwen_cli_integrator.py venice-tools verify
+python qwen_cli_integrator.py venice verify
 ```
 
 ### Step 3: Auto-configure with latest Venice models (Optional but recommended)
@@ -179,7 +179,7 @@ python -c "import requests, yaml; print('Dependencies OK')"
 echo $VENICE_API_KEY
 
 # Verify API key works
-python qwen_cli_integrator.py venice-tools verify
+python qwen_cli_integrator.py venice verify
 
 # List available providers
 python qwen_cli_integrator.py external list-providers
@@ -195,7 +195,7 @@ python auto_config.py --auto
 ```
 
 ### Having issues with specific features?
-- **Image generation not working?** Check your API key and verify: `python qwen_cli_integrator.py venice-tools verify`
+- **Image generation not working?** Check your API key and verify: `python qwen_cli_integrator.py venice verify`
 - **Chat not working?** Make sure you have a supported model: `python qwen_cli_integrator.py external list-providers`
 - **Configuration issues?** Try manual config creation (see Configuration section above)
 

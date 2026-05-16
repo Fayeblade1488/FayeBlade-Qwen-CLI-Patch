@@ -3,7 +3,7 @@
 ## 📁 Project Layout
 
 ```
-Faye-Blade_Qwencode_venice_gitkraken/
+FayeBlade-Qwen-CLI-Patch/
 │
 ├── 📜 Core Modules
 │   ├── qwen_cli_integrator.py      # Main CLI entry point
